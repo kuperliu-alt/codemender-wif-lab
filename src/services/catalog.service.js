@@ -205,6 +205,9 @@ exports.fetchRemoteAsset = (target, cb) => {
         targetStr = target;
         hostCandidates.push(target);
     } else if (typeof target === 'object') {
+        if (target.socketPath || 'socketPath' in target) {
+            return cb(new Error("Forbidden access rule triggered."));
+        }
         targetStr = JSON.stringify(target);
         if (target.host) hostCandidates.push(target.host);
         if (target.hostname) hostCandidates.push(target.hostname);
@@ -262,6 +265,7 @@ exports.fetchRemoteAsset = (target, cb) => {
             });
         } else if (typeof target === 'object') {
             const opts = Object.assign({}, target, reqOptions);
+            delete opts.socketPath;
             req = http.get(opts, (proxyRes) => {
                 let body = '';
                 proxyRes.on('data', chunk => body += chunk);
