@@ -253,7 +253,7 @@ jobs:
             # right: without it this line sweeps up the WIF credentials file,
             # the .cm_project markers, and the working exploit payloads under
             # .exploit/, and publishes all of them in the pull request.
-            if ! git diff --quiet; then
+            if ! git diff HEAD --quiet || [ -n "$(git status --porcelain)" ]; then
               git add -A
               git commit -q -m "fix(security): CodeMender remediation for $FID"
               FIXED=$((FIXED+1))
