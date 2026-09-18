@@ -45,8 +45,18 @@ function isForbiddenHost(rawHost) {
         if (/^fe[89ab]/i.test(host)) return true;
         if (host.startsWith('::ffff:')) {
             const mapped = host.replace('::ffff:', '');
+            if (mapped.includes(':')) {
+                const parts = mapped.split(':');
+                if (parts.length === 2) {
+                    const hi = parseInt(parts[0], 16);
+                    const lo = parseInt(parts[1], 16);
+                    const ipv4 = `${(hi >> 8) & 0xff}.${hi & 0xff}.${(lo >> 8) & 0xff}.${lo & 0xff}`;
+                    if (isForbiddenHost(ipv4)) return true;
+                }
+            }
             if (isForbiddenHost(mapped)) return true;
         }
+        if (host.startsWith('::')) return true;
     }
 
     return false;
@@ -54,30 +64,34 @@ function isForbiddenHost(rawHost) {
 
 function extractHostname(target) {
     if (!target) return null;
+    let raw = '';
     if (typeof target === 'string') {
-        try {
-            const parsed = new URL(target.startsWith('http://') || target.startsWith('https://') ? target : `http://${target}`);
-            return parsed.hostname;
-        } catch (e) {
-            return target.split('/')[0].split(':')[0];
+        raw = target.trim();
+    } else if (typeof target === 'object') {
+        if (target.hostname) {
+            raw = String(target.hostname).trim();
+        } else if (target.host) {
+            raw = String(target.host).trim();
+        } else if (target.href) {
+            raw = String(target.href).trim();
+        } else if (target.url) {
+            raw = String(target.url).trim();
         }
     }
-    if (typeof target === 'object') {
-        if (target.hostname) return target.hostname;
-        if (target.host) return target.host.split(':')[0];
-        if (target.href) {
-            try {
-                return new URL(target.href).hostname;
-            } catch (e) {}
+    if (!raw) return null;
+
+    try {
+        if (raw.startsWith('http://') || raw.startsWith('https://')) {
+            return new URL(raw).hostname;
         }
-        if (target.url) {
-            try {
-                const urlStr = String(target.url);
-                return new URL(urlStr.startsWith('http://') || urlStr.startsWith('https://') ? urlStr : `http://${urlStr}`).hostname;
-            } catch (e) {}
+        if (net.isIPv6(raw)) {
+            return new URL(`http://[${raw}]`).hostname;
         }
+        return new URL(`http://${raw}`).hostname;
+    } catch (e) {
+        const hostPart = raw.split('/')[0].split(':')[0].replace(/^\[|\]$/g, '');
+        return hostPart || null;
     }
-    return null;
 }
 
 exports.search = (q) => productRepo.filterProducts(q);
@@ -85,11 +99,11 @@ exports.search = (q) => productRepo.filterProducts(q);
 exports.fetchRemoteAsset = (target, cb) => {
     const targetStr = typeof target === 'string'
         ? target
-        : (target && (target.url || target.href || target.hostname) ? String(target.url || target.href || target.hostname) : '');
+        : (target && (target.url || target.href || target.hostname || target.host) ? String(target.url || target.href || target.hostname || target.host) : '');
     
     const hostname = extractHostname(target);
 
-    if (targetStr.includes('internal-network') || isForbiddenHost(hostname)) {
+    if (!hostname || targetStr.includes('internal-network') || isForbiddenHost(hostname)) {
         return cb(new Error("Forbidden access rule triggered."));
     }
     http.get(target, (proxyRes) => {
