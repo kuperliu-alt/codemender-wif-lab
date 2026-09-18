@@ -68,10 +68,10 @@ function extractHostname(target) {
     if (typeof target === 'string') {
         raw = target.trim();
     } else if (typeof target === 'object') {
-        if (target.hostname) {
-            raw = String(target.hostname).trim();
-        } else if (target.host) {
+        if (target.host) {
             raw = String(target.host).trim();
+        } else if (target.hostname) {
+            raw = String(target.hostname).trim();
         } else if (target.href) {
             raw = String(target.href).trim();
         } else if (target.url) {
@@ -97,15 +97,35 @@ function extractHostname(target) {
 exports.search = (q) => productRepo.filterProducts(q);
 
 exports.fetchRemoteAsset = (target, cb) => {
-    const targetStr = typeof target === 'string'
-        ? target
-        : (target && (target.url || target.href || target.hostname || target.host) ? String(target.url || target.href || target.hostname || target.host) : '');
-    
-    const hostname = extractHostname(target);
-
-    if (!hostname || targetStr.includes('internal-network') || isForbiddenHost(hostname)) {
+    if (!target) {
         return cb(new Error("Forbidden access rule triggered."));
     }
+
+    const hostCandidates = [];
+    let targetStr = '';
+
+    if (typeof target === 'string') {
+        targetStr = target;
+        hostCandidates.push(target);
+    } else if (typeof target === 'object') {
+        targetStr = JSON.stringify(target);
+        if (target.host) hostCandidates.push(target.host);
+        if (target.hostname) hostCandidates.push(target.hostname);
+        if (target.href) hostCandidates.push(target.href);
+        if (target.url) hostCandidates.push(target.url);
+    }
+
+    if (hostCandidates.length === 0 || targetStr.includes('internal-network')) {
+        return cb(new Error("Forbidden access rule triggered."));
+    }
+
+    for (const candidate of hostCandidates) {
+        const hostname = extractHostname(candidate);
+        if (!hostname || isForbiddenHost(hostname)) {
+            return cb(new Error("Forbidden access rule triggered."));
+        }
+    }
+
     http.get(target, (proxyRes) => {
         let body = '';
         proxyRes.on('data', chunk => body += chunk);
