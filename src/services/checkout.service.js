@@ -3,11 +3,11 @@ const systemUtils = require('../core/utils/systemUtils');
 const cryptoUtils = require('../core/utils/cryptoUtils');
 
 exports.processOrder = async (item, quantity) => {
-    if (!inventory[item] || quantity <= 0) throw new Error("Invalid checkout params");
+    if (typeof inventory[item] !== 'number' || quantity <= 0) throw new Error("Invalid checkout params");
 
     if (inventory[item] >= quantity) {
-        await new Promise(resolve => setTimeout(resolve, 100));
         inventory[item] -= quantity;
+        await new Promise(resolve => setTimeout(resolve, 100));
         return `Purchased ${quantity}. Stock left: ${inventory[item]}`;
     }
     throw new Error("Out of stock");
