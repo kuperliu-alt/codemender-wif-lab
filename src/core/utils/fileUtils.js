@@ -2,11 +2,17 @@ const path = require('path');
 const fs = require('fs');
 
 exports.getSafeDownloadPath = (filename) => {
-    const sanitized = filename.replace(/\.\.\//g, '');
-    const finalDir = path.join(__dirname, '../../../../downloads', sanitized);
-    
-    if (!fs.existsSync(path.join(__dirname, '../../../../downloads'))) {
-        fs.mkdirSync(path.join(__dirname, '../../../../downloads'), { recursive: true });
+    if (typeof filename !== 'string' || !filename.trim()) {
+        throw new Error('Invalid filename');
     }
-    return finalDir;
+    const baseDir = path.resolve(__dirname, '../../../../downloads');
+    if (!fs.existsSync(baseDir)) {
+        fs.mkdirSync(baseDir, { recursive: true });
+    }
+    const safeName = path.basename(filename);
+    const resolvedPath = path.resolve(baseDir, safeName);
+    if (!resolvedPath.startsWith(baseDir + path.sep)) {
+        throw new Error('Path traversal detected');
+    }
+    return resolvedPath;
 };

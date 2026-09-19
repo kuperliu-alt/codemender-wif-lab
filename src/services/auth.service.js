@@ -6,5 +6,11 @@ exports.resetPasswordToken = () => {
 };
 
 exports.updateUserProfile = (id, payload) => {
-    return userRepository.updateUser(id, payload);
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        return null;
+    }
+    const safePayload = {};
+    if (typeof payload.name === 'string') safePayload.name = payload.name;
+    if (typeof payload.email === 'string') safePayload.email = payload.email;
+    return userRepository.updateUser(id, safePayload);
 };
