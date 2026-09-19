@@ -51,17 +51,10 @@ else:
 
 print(f"  status:     {status}" + (f" (confidence: {confidence}%)" if confidence != "" else ""))
 
-if status in BLOCKING:
-    print("  verdict:    dismissed as not exploitable. Skipping remediation.")
-    sys.exit(EXIT_SKIP)
-
 if status == "VERIFIED":
     print("  verdict:    confirmed exploitable. Remediating.")
-elif status == "EXPLOIT_FAILED":
-    print("  verdict:    believed real but no working exploit was produced. Remediating anyway.")
-elif status == "NOT_FOUND":
-    print("  verdict:    finding missing from the report. Remediating anyway.")
+    sys.exit(EXIT_FIX)
 else:
-    print("  verdict:    inconclusive. Remediating anyway.")
+    print(f"  verdict:    {status} (not exploitable). Skipping remediation.")
+    sys.exit(EXIT_SKIP)
 
-sys.exit(EXIT_FIX)

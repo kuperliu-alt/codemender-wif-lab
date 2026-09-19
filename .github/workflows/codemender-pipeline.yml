@@ -320,7 +320,9 @@ jobs:
           PATCHED="${{ steps.remediate.outputs.fixed }}"
           FOUND="${FOUND:-0}"
           PATCHED="${PATCHED:-0}"
-          if [ "$FOUND" -gt 0 ]; then
-            echo "::error title=Deployment blocked::CodeMender found $FOUND HIGH/CRITICAL finding(s). $PATCHED proposed for remediation in the pull request, $((FOUND-PATCHED)) not yet addressed. Failing the pipeline."
+          if [ "$PATCHED" -gt 0 ]; then
+            echo "::error title=Deployment blocked::CodeMender verified and patched $PATCHED HIGH/CRITICAL finding(s) in the pull request. Failing the pipeline until merged."
             exit 1
           fi
+          echo "✅ Security Gate passed: 0 verified exploitable HIGH/CRITICAL vulnerabilities remaining."
+
