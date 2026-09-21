@@ -17,9 +17,8 @@ findings = data.get('findings', []) if isinstance(data, dict) else data
 if not isinstance(findings, list): findings = []
 
 severities = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
-# Only these are worth spending an autonomous fix on. Anything below HIGH is
-# reported but never patched automatically.
-FIXABLE = ("CRITICAL", "HIGH")
+# Remediate all detected vulnerabilities in a single batch run.
+FIXABLE = ("CRITICAL", "HIGH", "MEDIUM", "LOW")
 
 max_sev_value, max_sev_name = 0, "NONE"
 high_critical_count = 0

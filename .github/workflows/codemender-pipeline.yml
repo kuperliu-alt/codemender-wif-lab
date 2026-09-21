@@ -50,7 +50,7 @@ env:
   SCAN_PATH: src/services
   CM_DOWNLOAD_URL: "https://artifactregistry.googleapis.com/download/v1/projects/cmoc-prod/locations/us/repositories/codemender-cli-production/files/cm%3Astable%3Acm-linux-amd64.zip:download?alt=media"
   CM_MODEL: gemini-3.7-flash
-  CM_LIMIT: "1"
+  CM_LIMIT: "20"
 
 jobs:
   codemender-security:
