@@ -167,10 +167,10 @@ jobs:
           #     1. run without asking the user to confirm anything
           #     2. pin the model to $CM_MODEL
           #
-          #   Note what you do not need. The agent is already scoped to the
-          #   whole repository by project_paths above, so there is no reason to
-          #   switch the sandbox off here.
-          cm find "$SCAN_PATH" -y --model "$CM_MODEL" 2>&1 | tee "$RUNNER_TEMP/cm-find.cm.log"
+          #   Note: On GitHub Actions ubuntu-latest (Ubuntu 24.04+), AppArmor
+          #   blocks unprivileged network namespace ioctl calls inside cm v0.8.0's
+          #   built-in sbox (--sandbox=false uses project_paths scoping instead).
+          cm find "$SCAN_PATH" -y --sandbox=false --model "$CM_MODEL" 2>&1 | tee "$RUNNER_TEMP/cm-find.cm.log"
 
       # Re-emit the findings as JSON for the triage script. This is a separate
       # step guarded by always() so that a scan which finds problems still
@@ -221,7 +221,7 @@ jobs:
             # Omit --bypass-warning and verification dies on its first step
             # with "warning not acknowledged", the finding stays OPEN, and the
             # run quietly degrades to fixing without ever having verified.
-            yes | cm verify "$FID" -y --bypass-warning --model "$CM_MODEL" \
+            yes | cm verify "$FID" -y --bypass-warning --sandbox=false --model "$CM_MODEL" \
               2>&1 | tee "$RUNNER_TEMP/verify-$FID.cm.log" || true
 
             # cm verify exits 0 whatever the verdict, so the answer has to be
@@ -248,7 +248,7 @@ jobs:
             #
             #   Do not add --unrestricted. project_paths already gave the agent
             #   this whole repository.
-            yes | cm fix "$FID" -y --bypass-warning --model "$CM_MODEL" 2>&1 | tee "$RUNNER_TEMP/fix-$FID.cm.log" || true
+            yes | cm fix "$FID" -y --bypass-warning --sandbox=false --model "$CM_MODEL" 2>&1 | tee "$RUNNER_TEMP/fix-$FID.cm.log" || true
 
             # Safety net: if cm did not edit the files directly, recover the
             # patch from the log and apply it by hand.
