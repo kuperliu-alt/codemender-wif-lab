@@ -143,14 +143,20 @@ jobs:
         run: |
           set -euo pipefail
           cm init || true
-          CONFIG="$HOME/.codemender/config.yaml"
-          if ! grep -q '^project_paths:' "$CONFIG" 2>/dev/null; then
-            printf '\nproject_paths:\n  - "%s"\n' "$GITHUB_WORKSPACE" >> "$CONFIG"
-          fi
-          sed -i 's/type: ""/type: "git"/' "$CONFIG" 2>/dev/null || true
-          if ! grep -q 'type: "git"' "$CONFIG" 2>/dev/null && ! grep -q 'type: git' "$CONFIG" 2>/dev/null; then
-            printf '\nvcs:\n  type: git\n' >> "$CONFIG"
-          fi
+          for CONFIG in "$HOME/.codemender/config.yaml" "$GITHUB_WORKSPACE/.codemender/config.yaml"; do
+            mkdir -p "$(dirname "$CONFIG")"
+            touch "$CONFIG"
+            if ! grep -q '^project_paths:' "$CONFIG" 2>/dev/null; then
+              printf '\nproject_paths:\n  - "%s"\n' "$GITHUB_WORKSPACE" >> "$CONFIG"
+            fi
+            sed -i 's/type: ""/type: "git"/' "$CONFIG" 2>/dev/null || true
+            if ! grep -q 'type: "git"' "$CONFIG" 2>/dev/null && ! grep -q 'type: git' "$CONFIG" 2>/dev/null; then
+              printf '\nvcs:\n  type: git\n' >> "$CONFIG"
+            fi
+            if ! grep -q '  - lab' "$CONFIG" 2>/dev/null; then
+              sed -i 's/  - node_modules/  - node_modules\n  - lab\n  - .github/' "$CONFIG" 2>/dev/null || true
+            fi
+          done
           echo "Sandbox scoped to: $GITHUB_WORKSPACE"
 
       - name: CodeMender Scan
@@ -215,7 +221,7 @@ jobs:
             # Omit --bypass-warning and verification dies on its first step
             # with "warning not acknowledged", the finding stays OPEN, and the
             # run quietly degrades to fixing without ever having verified.
-            cm verify "$FID" -y --bypass-warning --model "$CM_MODEL" \
+            yes | cm verify "$FID" -y --bypass-warning --model "$CM_MODEL" \
               2>&1 | tee "$RUNNER_TEMP/verify-$FID.cm.log" || true
 
             # cm verify exits 0 whatever the verdict, so the answer has to be
@@ -242,7 +248,7 @@ jobs:
             #
             #   Do not add --unrestricted. project_paths already gave the agent
             #   this whole repository.
-            cm fix "$FID" -y --bypass-warning --model "$CM_MODEL" 2>&1 | tee "$RUNNER_TEMP/fix-$FID.cm.log" || true
+            yes | cm fix "$FID" -y --bypass-warning --model "$CM_MODEL" 2>&1 | tee "$RUNNER_TEMP/fix-$FID.cm.log" || true
 
             # Safety net: if cm did not edit the files directly, recover the
             # patch from the log and apply it by hand.
