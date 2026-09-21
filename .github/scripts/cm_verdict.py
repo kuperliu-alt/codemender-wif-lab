@@ -35,8 +35,8 @@ if not isinstance(findings, list): findings = []
 
 match = None
 for finding in findings:
-    # Handle both lowercase (custom json) and uppercase (cm schema) keys
-    fid = finding.get('FindingID') or finding.get('id') or ''
+    # Handle snake_case (cm v0.8.0+), PascalCase (cm v0.5-v0.7), and custom json keys
+    fid = finding.get('finding_id') or finding.get('FindingID') or finding.get('id') or ''
     # cm accepts an ID prefix, so the report may carry the full UUID even
     # though we verified using a shorter form.
     if fid == finding_id or fid.startswith(finding_id) or finding_id.startswith(fid):

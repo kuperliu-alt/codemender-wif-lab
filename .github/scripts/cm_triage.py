@@ -26,9 +26,9 @@ high_critical_count = 0
 candidates = []
 
 for position, finding in enumerate(findings):
-    # Handle both lowercase (custom json) and uppercase (cm schema) keys
+    # Handle snake_case (cm v0.8.0+), PascalCase (cm v0.5-v0.7), and custom json keys
     sev = (finding.get('Severity') or finding.get('severity') or 'LOW').upper()
-    fid = finding.get('FindingID') or finding.get('id') or ''
+    fid = finding.get('finding_id') or finding.get('FindingID') or finding.get('id') or ''
     sev_value = severities.get(sev, 0)
 
     if sev_value > max_sev_value:
