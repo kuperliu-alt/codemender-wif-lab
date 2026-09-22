@@ -6,5 +6,9 @@ exports.resetPasswordToken = () => {
 };
 
 exports.updateUserProfile = (id, payload) => {
-    return userRepository.updateUser(id, payload);
+    const safePayload = {};
+    if (payload && typeof payload.name === 'string') {
+        safePayload.name = payload.name;
+    }
+    return userRepository.updateUser(id, safePayload);
 };
