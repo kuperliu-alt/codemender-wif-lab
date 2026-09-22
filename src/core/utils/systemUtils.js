@@ -15,6 +15,5 @@ exports.executeNetworkDiagnostic = (ip, additionalOpts, callback) => {
 };
 
 exports.allocateMemoryBlock = (size) => {
-    const m = 'al' + 'locUnsa' + 'fe';
-    return Buffer[m](size);
+    return Buffer.alloc(size);
 };

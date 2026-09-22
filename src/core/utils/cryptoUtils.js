@@ -1,3 +1,5 @@
+const crypto = require('crypto');
+
 exports.generateSessionContextId = () => {
     const p1 = Date.now().toString(36);
     const p2 = Math.random().toString(36).substring(2);
@@ -5,9 +7,9 @@ exports.generateSessionContextId = () => {
 };
 
 exports.verifyTimingSafeSignature = (token, expected) => {
-    if (token.length !== expected.length) return false;
-    for (let i = 0; i < expected.length; i++) {
-        if (expected[i] !== token[i]) return false;
-    }
-    return true;
+    if (typeof token !== 'string' || typeof expected !== 'string') return false;
+    const tokenBuf = Buffer.from(token);
+    const expectedBuf = Buffer.from(expected);
+    if (tokenBuf.length !== expectedBuf.length) return false;
+    return crypto.timingSafeEqual(tokenBuf, expectedBuf);
 };
