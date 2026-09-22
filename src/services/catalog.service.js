@@ -119,7 +119,25 @@ function isPrivateIP(ip) {
     return true;
 }
 
-exports.search = (q) => productRepo.filterProducts(q);
+exports.search = (q) => {
+    if (!q || typeof q !== 'object' || Array.isArray(q)) {
+        return [];
+    }
+    const safeQuery = {};
+    for (const [key, value] of Object.entries(q)) {
+        if (typeof key === 'string' && !key.startsWith('$')) {
+            if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+                safeQuery[key] = value;
+            } else {
+                return [];
+            }
+        } else {
+            return [];
+        }
+    }
+    const results = productRepo.filterProducts(safeQuery);
+    return results.filter(doc => doc.type !== 'internal');
+};
 
 exports.fetchRemoteAsset = (target, cb) => {
     const urlStr = typeof target === 'string' ? target : (target && typeof target.url === 'string' ? target.url : null);
